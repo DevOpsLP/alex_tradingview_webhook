@@ -20,7 +20,7 @@ How to Use the Code:
      ```
    - Run the application:  
      ```
-     npm start
+     node index.js
      ```
 
 ------------------------------------------
