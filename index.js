@@ -16,6 +16,9 @@ const TELEGRAM_CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID; // e.g. @channeluse
 // Initialize the Telegraf bot (we don't need polling here)
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 const formatPrice = (price) => {
     const str = price.toString();
