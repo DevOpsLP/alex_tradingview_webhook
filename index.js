@@ -76,7 +76,7 @@ const formatMessage = (data) => {
 
   const stopLine = `🛑 Stop : ${data.stopLoss}`;
 
-  return `${sideText}\n\n${symbolText}\n\n${entryLine}\n\n\n${targetsLine}\n\n${stopLine}`;
+  return `${sideText}\n\n${symbolText}\n\n${entryLine}\n\n\n${targetsLine}\n\n${stopLine}\n\n\n@AI_tradesbot`;
 };
 
 // Webhook endpoint
