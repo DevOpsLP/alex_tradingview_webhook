@@ -82,31 +82,50 @@ const formatMessage = (data) => {
 // Webhook endpoint
 app.post('/webhook', async (req, res) => {
   const data = req.body;
-  console.log(data)
-  // Basic payload validation
-  if (
-    !data ||
-    !data.side ||
-    !data.symbol ||
-    !data.entryPrice ||
-    !data.targets ||
-    !data.stopLoss
-  ) {
-    return res.status(400).json({ error: 'Invalid payload' });
+  console.log(data);
+
+  // Normalize symbol if it exists
+  if (data && data.symbol) {
+    data.symbol = normalizeSymbol(data.symbol);
   }
 
-  const message = formatMessage(data);
+  // Check if this is a close signal
+  if (data && data.message === "close") {
+    if (!data.symbol || !data.side) {
+      return res.status(400).json({ error: "Invalid close payload" });
+    }
+    // Build close message (e.g., "#LTC/USDT #Short\nClose the Signal")
+    const closeMsg = `#${data.symbol} #${data.side}\nClose the Signal`;
+    try {
+      await bot.telegram.sendMessage(TELEGRAM_CHANNEL_ID, closeMsg);
+      return res.status(200).json({ status: "Close message sent", message: closeMsg });
+    } catch (error) {
+      console.error("Error sending close message:", error);
+      return res.status(500).json({ error: "Failed to send close message" });
+    }
+  } else {
+    // Validate full payload for trade entries
+    if (
+      !data ||
+      !data.side ||
+      !data.symbol ||
+      !data.entryPrice ||
+      !data.targets ||
+      !data.stopLoss
+    ) {
+      return res.status(400).json({ error: "Invalid payload" });
+    }
 
-  try {
-    // Send the message to the Telegram channel using Telegraf
-    await bot.telegram.sendMessage(TELEGRAM_CHANNEL_ID, message);
-    res.status(200).json({ status: 'Message sent', message });
-  } catch (error) {
-    console.error('Error sending Telegram message:', error);
-    res.status(500).json({ error: 'Failed to send message' });
+    const message = formatMessage(data);
+    try {
+      await bot.telegram.sendMessage(TELEGRAM_CHANNEL_ID, message);
+      return res.status(200).json({ status: "Message sent", message });
+    } catch (error) {
+      console.error("Error sending Telegram message:", error);
+      return res.status(500).json({ error: "Failed to send message" });
+    }
   }
 });
-
 // Start the Express server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
