@@ -11,10 +11,13 @@ app.use(cors());
 
 // Get values from .env
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID; // e.g. @channelusername or a numeric id
+const TELEGRAM_BOT_TOKEN_2 = process.env.TELEGRAM_BOT_TOKEN_2;
+const TELEGRAM_CHANNEL_PROMOTION = process.env.TELEGRAM_CHANNEL_PROMOTION;
+const TELEGRAM_CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID;
 
 // Initialize the Telegraf bot (we don't need polling here)
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
+const promotionBot  = new Telegraf(TELEGRAM_BOT_TOKEN_2)
 
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok' });
@@ -102,6 +105,33 @@ app.post('/webhook', async (req, res) => {
     } catch (error) {
       console.error("Error sending close message:", error);
       return res.status(500).json({ error: "Failed to send close message" });
+    }
+  } else if (data && data.message === "lastTp") {
+    // This branch handles the final take profit alert.
+    // Validate the payload if needed
+    if (!data.symbol || !data.entryPrice || !data.finalTpPrice || !data.side) {
+      return res.status(400).json({ error: "Invalid lastTp payload" });
+    }
+
+    // Format your promotion message as desired.
+    // You can include calculations, leverage info, etc. Here’s an example:
+    const promotionMsg =
+      `Trading Bot Results @${new Date().toUTCString()}\n` +
+      `*Results #${data.side.toUpperCase()} #${data.symbol}*\n` +
+      `Entry Price: *${data.entryPrice}*\n` +
+      `Final TP Price: *${data.finalTpPrice}*\n` +
+      `Profit: *Calculated%* ~ leverage Xx\n` +
+      `*Enjoy profit from free automated trading Bot *\n` +
+      `Click the link, then [*START*]\n` +
+      `@AL_tradesbot`;
+
+    try {
+      // Assuming promotionBot is an instance configured with TELEGRAM_BOT_TOKEN_2
+      await promotionBot.telegram.sendMessage(TELEGRAM_CHANNEL_PROMOTION, promotionMsg);
+      return res.status(200).json({ status: "Promotion message sent", message: promotionMsg });
+    } catch (error) {
+      console.error("Error sending promotion message:", error);
+      return res.status(500).json({ error: "Failed to send promotion message" });
     }
   } else {
     // Validate full payload for trade entries
